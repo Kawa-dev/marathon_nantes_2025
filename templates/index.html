@@ -217,7 +217,7 @@
         <div class="container d-flex justify-content-between align-items-center">
             <div class="navbar-brand-custom">
                 <span class="main-title">Marathon de Nantes 2025</span>
-                <span class="sub-brand">Analyse des données finishers</span>
+                <span class="sub-brand">Analyse interactive des données finishers</span>
             </div>
             <div class="ms-3">
                 <img src="{{ url_for('static', filename='logo.avif') }}" 
@@ -569,7 +569,7 @@
                     data: {
                         datasets: [{
                             type: 'line', data: gpxTrack.map(pt => ({x: pt.dist, y: pt.ele})),
-                            borderColor: '#cbd5e1', backgroundColor: 'rgba(209, 213, 219, 0.2)', fill: true, pointRadius: 0, borderWidth: 2, tension: 0.1
+                            borderColor: '#cbd5e1', backgroundColor: 'rgba(209, 213, 219, 0.2)', fill: true, pointRadius: 0, borderWidth: 2, tension: 0 // Traits droits
                         }]
                     },
                     options: {
@@ -680,7 +680,7 @@
             const ctxPace = document.getElementById('paceChart').getContext('2d');
             if(paceChart) paceChart.destroy();
             const paceDatasets = Object.values(runners).map(r => ({
-                label: r.data.Nom, data: r.data.Vitesses, borderColor: r.color, backgroundColor: r.color, tension: 0.3, fill: false, borderWidth: 3, pointRadius: 3
+                label: r.data.Nom, data: r.data.Vitesses, borderColor: r.color, backgroundColor: r.color, tension: 0, fill: false, borderWidth: 3, pointRadius: 3 // Traits droits
             }));
             paceChart = new Chart(ctxPace, {
                 type: 'line', data: { labels: labels_x, datasets: paceDatasets },
@@ -692,13 +692,13 @@
             const ctxRank = document.getElementById('rankChart').getContext('2d');
             if(rankChart) rankChart.destroy();
             const rankDatasets = Object.values(runners).map(r => ({
-                label: r.data.Nom, data: r.data.Classements, borderColor: r.color, backgroundColor: r.color, tension: 0.3, fill: false, borderWidth: 3, pointRadius: 3, borderDash: [4, 4] 
+                label: r.data.Nom, data: r.data.Classements, borderColor: r.color, backgroundColor: r.color, tension: 0, fill: false, borderWidth: 3, pointRadius: 3, borderDash: [4, 4] // Traits droits
             }));
             rankChart = new Chart(ctxRank, {
                 type: 'line', data: { labels: labels_x, datasets: rankDatasets },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display: false}, tooltip: { backgroundColor: 'rgba(255, 255, 255, 0.95)', titleColor: textMain, bodyColor: textMain, borderColor: '#e2e8f0', borderWidth: 1, callbacks: { label: function(context) {
                     if (context.raw === null) return ''; return `${context.dataset.label} : ${context.raw}e`;
-                }}}}, scales: { x: { grid: { display: false }, ticks: {font: {size: 10}} }, y: { reverse: true, border: {display: false}, ticks: { precision: 0 } } } } // ICI: precision: 0 pour éviter les décimales
+                }}}}, scales: { x: { grid: { display: false }, ticks: {font: {size: 10}} }, y: { reverse: true, border: {display: false}, ticks: { precision: 0 } } } }
             });
         }
 
@@ -745,8 +745,14 @@
                 r.marker.setLatLng([coords.lat, coords.lng]);
 
                 let currentSpeed = 0;
-                if (currentSec === 0) { currentSpeed = r.data.Vitesses[1]; } 
-                else if (currentSec > r.data.Timeline[r.data.Timeline.length - 1].sec) { currentSpeed = -1; } 
+                
+                // CORRECTION ICI: Si le curseur a atteint ou dépassé le temps final du coureur
+                if (currentSec >= r.data.Timeline[r.data.Timeline.length - 1].sec) { 
+                    currentSpeed = -1; 
+                } 
+                else if (currentSec === 0) { 
+                    currentSpeed = r.data.Vitesses[1]; 
+                } 
                 else {
                     for(let i=0; i < r.data.Timeline.length - 1; i++) {
                         if (currentSec >= r.data.Timeline[i].sec && currentSec <= r.data.Timeline[i+1].sec) {
