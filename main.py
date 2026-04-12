@@ -86,6 +86,50 @@ if os.path.exists(DATA_PATH):
     
     pct_neg = round((nb_neg / total_coureurs) * 100, 1) if total_coureurs > 0 else 0
     pct_murs = round((murs / total_coureurs) * 100, 1) if total_coureurs > 0 else 0
+
+    # --- TOP 10 NEGATIVE SPLIT ---
+    df_valid_split = df_finishers[(df_finishers['Passage_KM21_sec'] > 0) & (df_finishers['Passage_ARRIVEE_sec'] > df_finishers['Passage_KM21_sec'])].copy()
+    df_valid_split['Semi1_sec'] = df_valid_split['Passage_KM21_sec']
+    df_valid_split['Semi2_sec'] = df_valid_split['Passage_ARRIVEE_sec'] - df_valid_split['Passage_KM21_sec']
+    
+    # Vitesses sur chaque semi
+    df_valid_split['Vitesse_Semi1'] = 21.1 / (df_valid_split['Semi1_sec'] / 3600)
+    df_valid_split['Vitesse_Semi2'] = 21.095 / (df_valid_split['Semi2_sec'] / 3600)
+    
+    # % Gain Vitesse (positif = plus rapide sur le 2ème semi)
+    df_valid_split['Gain_Vitesse_Pct'] = ((df_valid_split['Vitesse_Semi2'] - df_valid_split['Vitesse_Semi1']) / df_valid_split['Vitesse_Semi1']) * 100
+    
+    top_negative_splits_df = df_valid_split.sort_values(by='Gain_Vitesse_Pct', ascending=False).head(10)
+    top_neg_splits = []
+    
+    for _, row in top_negative_splits_df.iterrows():
+        # Format S1
+        s1_h, s1_rem = divmod(row['Semi1_sec'], 3600)
+        s1_m, s1_s = divmod(s1_rem, 60)
+        time_s1 = f"{int(s1_h):02d}:{int(s1_m):02d}:{int(s1_s):02d}" if s1_h > 0 else f"{int(s1_m):02d}:{int(s1_s):02d}"
+        
+        # Format S2
+        s2_h, s2_rem = divmod(row['Semi2_sec'], 3600)
+        s2_m, s2_s = divmod(s2_rem, 60)
+        time_s2 = f"{int(s2_h):02d}:{int(s2_m):02d}:{int(s2_s):02d}" if s2_h > 0 else f"{int(s2_m):02d}:{int(s2_s):02d}"
+
+        # Format Total
+        tot_h, tot_rem = divmod(row['Passage_ARRIVEE_sec'], 3600)
+        tot_m, tot_s = divmod(tot_rem, 60)
+        time_tot = f"{int(tot_h):02d}:{int(tot_m):02d}:{int(tot_s):02d}"
+        
+        top_neg_splits.append({
+            'Nom': str(row['Nom']).split('-')[0].strip(),
+            'Classement': safe_rank(row.get('Classement_ARRIVEE', 0)),
+            'Temps_Final': time_tot,
+            'Temps_S1': time_s1,
+            'Temps_S2': time_s2,
+            'Vitesse_S1_kmh': f"{row['Vitesse_Semi1']:.2f}",
+            'Allure_S1': vitesse_to_allure(row['Vitesse_Semi1']),
+            'Vitesse_S2_kmh': f"{row['Vitesse_Semi2']:.2f}",
+            'Allure_S2': vitesse_to_allure(row['Vitesse_Semi2']),
+            'Gain_Pct': f"{row['Gain_Vitesse_Pct']:.1f}"
+        })
     
     bins_minutes = np.arange(120, 435, 15) 
     labels_tranches = [f"{int(b//60)}h{int(b%60):02d}" for b in bins_minutes[:-1]]
@@ -130,6 +174,7 @@ if os.path.exists(DATA_PATH):
 else:
     df = pd.DataFrame()
     gpx_data = []
+    top_neg_splits = []
 
 @app.route('/')
 def index():
@@ -140,6 +185,7 @@ def index():
                            vitesse_med=round(vitesse_med, 2), allure_med=allure_med,
                            nb_neg=nb_neg, pct_neg=pct_neg,
                            murs=murs, pct_murs=pct_murs,
+                           top_neg_splits=top_neg_splits,
                            hist_labels=hist_labels, 
                            hist_hommes=hist_hommes, hist_femmes=hist_femmes,
                            dist_cat_data=dist_cat_data, 
