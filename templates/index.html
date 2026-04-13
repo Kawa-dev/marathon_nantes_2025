@@ -76,9 +76,8 @@
             padding: 1.2rem 1.5rem;
         }
 
-        /* Uniformisation des titres de box */
         .box-title {
-            font-size: 1.25rem; /* ~20px */
+            font-size: 1.25rem; 
             font-weight: 600 !important;
             color: var(--text-main);
             margin-bottom: 0;
@@ -198,9 +197,42 @@
             font-weight: bold; 
         }
         
-        /* Controls */
+        /* Controls & Custom Sliders */
         .player-box { padding: 15px 20px; background: white; }
         .speed-control { display: flex; align-items: center; background: #f8fafc; padding: 6px 16px; border-radius: 20px; border: 1px solid #e2e8f0; }
+        
+        /* Styling de la barre de progression */
+        .custom-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #e2e8f0; /* Couleur de fond par défaut */
+            outline: none;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+
+        .custom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--nantes-red);
+            border: 3px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .custom-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--nantes-red);
+            border: 3px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
         
         .btn { border-radius: 12px; box-shadow: none !important; font-size: 0.85rem; font-weight: 600;}
         .btn-outline-danger { color: var(--nantes-red); border-color: var(--nantes-red); }
@@ -217,7 +249,7 @@
         <div class="container d-flex justify-content-between align-items-center">
             <div class="navbar-brand-custom">
                 <span class="main-title">Marathon de Nantes 2025</span>
-                <span class="sub-brand">Analyse des données finishers</span>
+                <span class="sub-brand">Analyse interactive des données finishers</span>
             </div>
             <div class="ms-3">
                 <img src="{{ url_for('static', filename='logo.avif') }}" 
@@ -302,7 +334,7 @@
                     <div class="col-md-8 text-md-end d-flex justify-content-md-end justify-content-center align-items-center flex-wrap gap-2">
                         <div class="speed-control">
                             <label class="me-2 text-muted small mb-0">Vitesse</label>
-                            <input type="range" id="speedSlider" min="0.5" max="10" step="0.5" value="1" style="width: 100px; accent-color: var(--nantes-red);" 
+                            <input type="range" id="speedSlider" class="custom-slider" min="0.5" max="10" step="0.5" value="1" style="width: 100px;" 
                                    oninput="document.getElementById('speedValue').innerText = parseFloat(this.value).toFixed(1) + 'x'">
                             <span id="speedValue" class="ms-2 text-dark small font-monospace" style="width: 35px; text-align: left;">1.0x</span>
                         </div>
@@ -310,7 +342,7 @@
                         <button class="btn btn-danger px-4" id="playBtn" onclick="togglePlay()">▶️ Lecture</button>
                     </div>
                 </div>
-                <input type="range" class="form-range" id="timeSlider" min="0" max="21600" value="0" step="1" style="accent-color: var(--nantes-red);">
+                <input type="range" class="custom-slider mt-2 mb-2" id="timeSlider" min="0" max="21600" value="0" step="1">
             </div>
 
             <div class="p-3 bg-white border-top">
@@ -334,6 +366,45 @@
                     <div class="card-body">
                         <div style="height: 280px;"><canvas id="rankChart"></canvas></div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-5">
+            <div class="card-header-flat pt-4 pb-2">
+                <h2 class="box-title mb-1">Top 10 Negative Split 🚀</h2>
+                <p class="text-muted small mb-0">Les coureurs ayant le plus accéléré sur le 2ème semi-marathon par rapport au 1er.</p>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-borderless align-middle text-center mb-0" style="font-size: 0.9rem;">
+                        <thead class="table-light text-muted border-bottom" style="font-size: 0.8rem;">
+                            <tr>
+                                <th class="text-start ps-4">Coureur</th>
+                                <th>Classement</th>
+                                <th>Temps Final</th>
+                                <th>1er Semi (Temps)</th>
+                                <th>1er Semi (Allure)</th>
+                                <th>2ème Semi (Temps)</th>
+                                <th>2ème Semi (Allure)</th>
+                                <th class="pe-4">Gain Vitesse</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in top_neg_splits %}
+                            <tr class="border-bottom">
+                                <td class="text-start ps-4 fw-medium text-dark">{{ r.Nom }}</td>
+                                <td>#{{ r.Classement }}</td>
+                                <td><span class="badge bg-light text-dark border font-monospace py-2" style="font-size: 0.85rem;">{{ r.Temps_Final }}</span></td>
+                                <td><span class="font-monospace text-muted">{{ r.Temps_S1 }}</span></td>
+                                <td>{{ r.Vitesse_S1_kmh }} km/h <br><span class="text-muted" style="font-size:0.75rem;">{{ r.Allure_S1 }}/km</span></td>
+                                <td><span class="font-monospace text-dark fw-bold">{{ r.Temps_S2 }}</span></td>
+                                <td><span class="fw-medium text-dark">{{ r.Vitesse_S2_kmh }} km/h</span> <br><span class="text-muted" style="font-size:0.75rem;">{{ r.Allure_S2 }}/km</span></td>
+                                <td class="pe-4"><span class="badge bg-success text-white py-2 px-3">+{{ r.Gain_Pct }}%</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -569,7 +640,7 @@
                     data: {
                         datasets: [{
                             type: 'line', data: gpxTrack.map(pt => ({x: pt.dist, y: pt.ele})),
-                            borderColor: '#cbd5e1', backgroundColor: 'rgba(209, 213, 219, 0.2)', fill: true, pointRadius: 0, borderWidth: 2, tension: 0 // Traits droits
+                            borderColor: '#cbd5e1', backgroundColor: 'rgba(209, 213, 219, 0.2)', fill: true, pointRadius: 0, borderWidth: 2, tension: 0
                         }]
                     },
                     options: {
@@ -635,10 +706,14 @@
 
                 const initialHtml = data.Nom.substring(0, 2).toUpperCase();
                 const icon = L.divIcon({ className: 'custom-div-icon', html: `<div class="runner-marker" style="background-color:${color}; width:24px; height:24px;">${initialHtml}</div>`, iconSize: [24, 24], iconAnchor: [12, 12] });
+                
+                const polyline = L.polyline([], {color: color, weight: 4, opacity: 0.9}).addTo(map);
                 const marker = L.marker([gpxTrack[0].lat, gpxTrack[0].lng], {icon: icon}).addTo(map);
+                
                 marker.bindTooltip(`<b>${data.Nom}</b><br>Temps: ${data.Chrono}`, {direction: 'top'});
 
-                runners[dossard] = { data: data, marker: marker, color: color };
+                runners[dossard] = { data: data, marker: marker, polyline: polyline, color: color };
+                
                 updateUI();
                 updateSliderMax();
                 updatePositions(currentPlaybackTime);
@@ -648,6 +723,7 @@
         function removeRunner(dossard) {
             if(!runners[dossard]) return;
             map.removeLayer(runners[dossard].marker);
+            map.removeLayer(runners[dossard].polyline); 
             delete runners[dossard];
             updateUI();
             updateSliderMax();
@@ -655,7 +731,10 @@
         }
 
         function clearAll() {
-            Object.values(runners).forEach(r => map.removeLayer(r.marker));
+            Object.values(runners).forEach(r => {
+                map.removeLayer(r.marker);
+                map.removeLayer(r.polyline); 
+            });
             runners = {};
             markerColorIndex = 0;
             updateUI();
@@ -680,7 +759,7 @@
             const ctxPace = document.getElementById('paceChart').getContext('2d');
             if(paceChart) paceChart.destroy();
             const paceDatasets = Object.values(runners).map(r => ({
-                label: r.data.Nom, data: r.data.Vitesses, borderColor: r.color, backgroundColor: r.color, tension: 0, fill: false, borderWidth: 3, pointRadius: 3 // Traits droits
+                label: r.data.Nom, data: r.data.Vitesses, borderColor: r.color, backgroundColor: r.color, tension: 0, fill: false, borderWidth: 3, pointRadius: 3
             }));
             paceChart = new Chart(ctxPace, {
                 type: 'line', data: { labels: labels_x, datasets: paceDatasets },
@@ -692,7 +771,7 @@
             const ctxRank = document.getElementById('rankChart').getContext('2d');
             if(rankChart) rankChart.destroy();
             const rankDatasets = Object.values(runners).map(r => ({
-                label: r.data.Nom, data: r.data.Classements, borderColor: r.color, backgroundColor: r.color, tension: 0, fill: false, borderWidth: 3, pointRadius: 3, borderDash: [4, 4] // Traits droits
+                label: r.data.Nom, data: r.data.Classements, borderColor: r.color, backgroundColor: r.color, tension: 0, fill: false, borderWidth: 3, pointRadius: 3, borderDash: [4, 4]
             }));
             rankChart = new Chart(ctxRank, {
                 type: 'line', data: { labels: labels_x, datasets: rankDatasets },
@@ -732,6 +811,12 @@
             return {lat: last.lat, lng: last.lng, ele: last.ele};
         }
 
+        // NOUVEAU : Fonction pour mettre à jour la couleur de la barre de progression
+        function updateSliderFill() {
+            const percentage = slider.max > 0 ? (slider.value / slider.max) * 100 : 0;
+            slider.style.background = `linear-gradient(to right, var(--nantes-red) ${percentage}%, #e2e8f0 ${percentage}%)`;
+        }
+
         function updatePositions(currentSec) {
             const timeDisplay = document.getElementById('timeDisplay');
             timeDisplay.innerText = "⏱️ " + formatTime(currentSec);
@@ -742,11 +827,22 @@
             Object.values(runners).forEach(r => {
                 const dist = getDistanceAtTime(r.data.Timeline, currentSec);
                 const coords = getCoordsForDistance(dist);
+                
                 r.marker.setLatLng([coords.lat, coords.lng]);
+
+                let pathCoords = [];
+                for (let i = 0; i < gpxTrack.length; i++) {
+                    if (gpxTrack[i].dist <= dist) {
+                        pathCoords.push([gpxTrack[i].lat, gpxTrack[i].lng]);
+                    } else {
+                        break;
+                    }
+                }
+                pathCoords.push([coords.lat, coords.lng]); 
+                r.polyline.setLatLngs(pathCoords);
 
                 let currentSpeed = 0;
                 
-                // CORRECTION ICI: Si le curseur a atteint ou dépassé le temps final du coureur
                 if (currentSec >= r.data.Timeline[r.data.Timeline.length - 1].sec) { 
                     currentSpeed = -1; 
                 } 
@@ -777,12 +873,26 @@
                 elevationChart.data.datasets = [elevationChart.data.datasets[0], ...runnerEleDatasets];
                 elevationChart.update();
             }
+            
+            // Appel de la fonction de remplissage de la barre
+            updateSliderFill();
         }
 
         slider.addEventListener('input', (e) => {
             currentPlaybackTime = parseFloat(e.target.value);
             updatePositions(currentPlaybackTime);
         });
+
+        // Appliquer l'effet visuel aussi sur le curseur de vitesse (bonus)
+        const speedSlider = document.getElementById('speedSlider');
+        speedSlider.addEventListener('input', (e) => {
+            const percentage = ((e.target.value - e.target.min) / (e.target.max - e.target.min)) * 100;
+            e.target.style.background = `linear-gradient(to right, var(--nantes-red) ${percentage}%, #e2e8f0 ${percentage}%)`;
+        });
+        // Initialisation de la couleur de la vitesse au chargement
+        const initSpeedPercentage = ((speedSlider.value - speedSlider.min) / (speedSlider.max - speedSlider.min)) * 100;
+        speedSlider.style.background = `linear-gradient(to right, var(--nantes-red) ${initSpeedPercentage}%, #e2e8f0 ${initSpeedPercentage}%)`;
+
 
         function restartReplay() {
             currentPlaybackTime = 0;
@@ -792,7 +902,6 @@
 
         function togglePlay() {
             const btn = document.getElementById('playBtn');
-            const speedSlider = document.getElementById('speedSlider');
             if(isPlaying) {
                 clearInterval(playInterval);
                 btn.innerHTML = "▶️ Lecture"; btn.classList.replace('btn-dark', 'btn-danger');
